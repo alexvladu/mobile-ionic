@@ -20,7 +20,6 @@ export function useWebSocket(url: string) {
     };
 
     ws.current.onmessage = (event) => {
-      console.log("am primit " +(v4()+event.data));
       setLastMessage(v4()+event.data);
     };
 
