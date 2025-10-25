@@ -5,6 +5,12 @@ export interface Developer {
   fullStack: boolean;
   endDate: string;
 }
+
+export interface DeveloperPaginated {
+  data:Developer[];
+  total:number;
+}
+
 export interface DeveloperFormData{
   name: string;
   age: number;
