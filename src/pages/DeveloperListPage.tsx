@@ -49,6 +49,8 @@ const DeveloperListPage: React.FC = () => {
   const [showPopover, setShowPopover] = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(undefined);
 
+  const user = null;
+
   useEffect(() => {
     loadDevelopers();
   }, [loadDevelopers, lastMessage]);
@@ -110,8 +112,8 @@ const DeveloperListPage: React.FC = () => {
           <div className="actions flex items-center gap-2" style={{textAlign:"right"}}>
             {/* Profile Avatar */}
             <div onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
-              <IonAvatar style={{ width: '36px', height: '36px', justifySelf: "right" }}>
-                alex
+              <IonAvatar style={{ width: '36px', height: '36px', justifyContent: 'right' }}>
+                Alex
               </IonAvatar>
             </div>
 
@@ -120,12 +122,21 @@ const DeveloperListPage: React.FC = () => {
               onClick={handleOpenAdd}
             >
               <IonIcon icon={add} slot="start" />
-              Add Developer
+              Add
+            </IonButton>
+
+            <IonButton
+              className="bg-red-500 text-white rounded-lg hover:scale-105 transition-transform"
+              onClick={handleLogout}
+            >
+              <IonIcon icon={logOut} slot="start" />
+              Logout
             </IonButton>
           </div>
         </IonToolbar>
       </IonHeader>
 
+      {/* Profile Popover */}
       <IonPopover
         isOpen={showPopover}
         event={popoverEvent}
@@ -135,6 +146,10 @@ const DeveloperListPage: React.FC = () => {
           <IonItem button onClick={handleProfileNavigation}>
             <IonIcon icon={person} slot="start" />
             <IonLabel>My Profile</IonLabel>
+          </IonItem>
+          <IonItem button onClick={handleSettingsNavigation}>
+            <IonIcon icon={settings} slot="start" />
+            <IonLabel>Settings</IonLabel>
           </IonItem>
           <IonItem button onClick={handleLogout} lines="none">
             <IonIcon icon={logOut} slot="start" color="danger" />
