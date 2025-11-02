@@ -1,18 +1,23 @@
-// src/api/developers.ts
 import axios from 'axios';
-import { Developer } from '../types/developer';
+import { Developer, DeveloperPaginated } from '../types/developer';
+import axiosInstance from '../interceptors/authInterceptor';
+
 
 export class DeveloperService {
-  private baseUrl = 'http://localhost:8080/api/developers'; // endpoint Quarkus
+  private baseUrl = 'http://localhost:8080/api/developers';
 
-  async fetchDevelopers(): Promise<Developer[]> {
-    const res = await axios.get<Developer[]>(this.baseUrl);
+  async fetchDevelopers(page:number, size:number, searchName:string|null, filterFullStack:string|null): Promise<DeveloperPaginated> {
+    let path=`${this.baseUrl}?page=${page}&size=${size}`;
+    if(searchName)
+      path=path+`&name=${searchName}`;
+    if(filterFullStack=="true" || filterFullStack=="false")
+      path=path+`&fullStack=${filterFullStack}`;
+    const res = await axiosInstance.get<DeveloperPaginated>(path);
     return res.data;
   }
 
-  // Create a new developer
   async createDeveloper(dev: Omit<Developer, 'id'>): Promise<Developer> {
-    const res = await axios.post<Developer>(this.baseUrl, dev, {
+    const res = await axiosInstance.post<Developer>(this.baseUrl, dev, {
       headers: { 'Content-Type': 'application/json' },
     });
     return res.data;
@@ -20,7 +25,7 @@ export class DeveloperService {
 
   // Update an existing developer
   async updateDeveloper(id: number, dev: Developer): Promise<Developer> {
-    const res = await axios.put<Developer>(`${this.baseUrl}/${id}`, dev, {
+    const res = await axiosInstance.put<Developer>(`${this.baseUrl}/${id}`, dev, {
       headers: { 'Content-Type': 'application/json' },
     });
     return res.data;
@@ -28,6 +33,6 @@ export class DeveloperService {
 
   // Delete a developer
   async deleteDeveloper(id: number): Promise<void> {
-    await axios.delete(`${this.baseUrl}/${id}`);
+    await axiosInstance.delete(`${this.baseUrl}/${id}`);
   }
 }

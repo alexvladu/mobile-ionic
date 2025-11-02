@@ -1,0 +1,202 @@
+.login-page {
+  --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+}
+
+.background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  z-index: 0; /* FIX: de la 1 la 0 */
+  pointer-events: none; /* FIX: NU mai prinde click-uri */
+}
+
+.login-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 10; /* FIX: de la 2 la 10 */
+  position: relative; /* FIX: adaugă asta */
+  margin: 0 auto;
+}
+
+/* Restul stilurilor rămân la fel... */
+.logo-container {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo-circle {
+  width: 80px;
+  height: 80px;
+  background: var(--ion-color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.logo-icon {
+  font-size: 40px;
+  color: white;
+}
+
+.welcome-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.login-form {
+  margin-bottom: 20px;
+}
+
+.custom-input-item {
+  --background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.custom-input-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.input-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+  margin-right: 8px;
+}
+
+.input-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.custom-input {
+  --padding-start: 0;
+  font-size: 16px;
+}
+
+.password-toggle {
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.password-toggle:hover,
+.password-toggle:active {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--ion-color-primary);
+}
+
+.error-container {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+.error-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.error-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-button {
+  --background: var(--ion-color-primary);
+  --border-radius: 12px;
+  height: 56px;
+  margin: 20px 0;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: none;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.login-button:hover:not(.button-disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+.footer-links {
+  text-align: center;
+}
+
+.forgot-button {
+    --color: #666;
+  --color-hover: var(--ion-color-primary);
+  height: 44px;
+  margin: 8px 0;
+  font-size: 14px;
+  text-transform: none;
+  transition: all 0.3s ease;
+}
+
+.register-button:hover,
+.forgot-button:hover {
+  --color: var(--ion-color-primary);
+}
+
+ion-progress-bar {
+  --background: rgba(255, 255, 255, 0.2);
+  --progress-background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    margin: 10px;
+    max-width: none;
+  }
+  
+  .welcome-text {
+    font-size: 20px;
+  }
+}
