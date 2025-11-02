@@ -112,7 +112,7 @@ const DeveloperListPage: React.FC = () => {
           <div className="actions flex items-center gap-2" style={{textAlign:"right"}}>
             {/* Profile Avatar */}
             <div onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
-              <IonAvatar style={{ width: '36px', height: '36px', justifyContent: 'right' }}>
+              <IonAvatar style={{ width: '36px', height: '36px', justifySelf: 'right' }}>
                 Alex
               </IonAvatar>
             </div>
@@ -123,14 +123,6 @@ const DeveloperListPage: React.FC = () => {
             >
               <IonIcon icon={add} slot="start" />
               Add
-            </IonButton>
-
-            <IonButton
-              className="bg-red-500 text-white rounded-lg hover:scale-105 transition-transform"
-              onClick={handleLogout}
-            >
-              <IonIcon icon={logOut} slot="start" />
-              Logout
             </IonButton>
           </div>
         </IonToolbar>
@@ -146,10 +138,6 @@ const DeveloperListPage: React.FC = () => {
           <IonItem button onClick={handleProfileNavigation}>
             <IonIcon icon={person} slot="start" />
             <IonLabel>My Profile</IonLabel>
-          </IonItem>
-          <IonItem button onClick={handleSettingsNavigation}>
-            <IonIcon icon={settings} slot="start" />
-            <IonLabel>Settings</IonLabel>
           </IonItem>
           <IonItem button onClick={handleLogout} lines="none">
             <IonIcon icon={logOut} slot="start" color="danger" />
