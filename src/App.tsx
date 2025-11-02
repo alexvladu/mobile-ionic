@@ -25,6 +25,7 @@ import '@ionic/react/css/display.css';
 import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
 import { AuthProvider } from './context/AuthContext';
+import ProfilePage from './pages/ProfilePage';
 
 setupIonicReact();
 
@@ -51,6 +52,8 @@ const App: React.FC = () => (
             )} />
 
             <Route exact path="/developers/add" component={AddDeveloperPage} />
+
+            <Route exact path="/profile" component={ProfilePage}></Route>
 
             <Route render={() => <Redirect to="/login" />} />
           </IonRouterOutlet>

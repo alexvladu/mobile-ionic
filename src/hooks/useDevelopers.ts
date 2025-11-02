@@ -3,8 +3,8 @@ import { Developer } from '../types/developer';
 import { DeveloperService } from '../api/developers';
 import { useAppWebSocket } from '../context/WebSocketContext';
 import { save, search } from 'ionicons/icons';
-import { getOfflineDevelopers, saveOfflineDeveloper } from '../utils/offlineQueue';
-import { loadDevelopersFromLocal, loadDevelopersOnlineSize, saveDevelopersOnlineSize, saveDevelopersToLocal } from '../utils/saveLocalStorageDevelopers';
+import { clearOfflineDevelopers, getOfflineDevelopers, saveOfflineDeveloper } from '../utils/offlineQueue';
+import { loadDevelopersFromLocal, loadDevelopersOnlineSize, removeDeveloperFromLocal, saveDevelopersOnlineSize, saveDevelopersToLocal, updateDeveloperInLocal } from '../utils/saveLocalStorageDevelopers';
 
 export const useDevelopers = () => {
   const devService = new DeveloperService();
@@ -21,10 +21,31 @@ export const useDevelopers = () => {
 
   useEffect(() => {
     currentPage!==0 && setCurrentPage(0);
+    setDevelopers(filterDevelopers(developers));
   }, [filterFullStack]);
 
-
   const { isConnected, sendMessage } = useAppWebSocket();
+
+  useEffect(() => {
+    const syncOfflineDevelopers = async () => {
+      if(getOfflineDevelopers().length===0) return;
+      try {
+        const offlineList = getOfflineDevelopers();
+        for (const dev of offlineList) {
+          await addDeveloper(dev);
+        }
+      } catch (error) {
+        console.error('Failed to sync offline developers:', error);
+      }
+      finally{
+        clearOfflineDevelopers();
+        alert('Offline added developers synchronized successfully.');
+      }
+    };
+    if (isConnected) {
+      syncOfflineDevelopers();
+    }
+  }, [isConnected]);
 
   const filterDevelopers = (developers: Developer[]): Developer[] => {
     switch (filterFullStack) {
@@ -38,6 +59,20 @@ export const useDevelopers = () => {
     }
   };
 
+  const searchDevelopersByName = (developers: Developer[], searchTerm: string | null): Developer[] => {
+    if (!searchTerm) return developers;
+    
+    return developers.filter(dev => 
+      dev.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filter = (developers: Developer[]) : Developer[] =>{
+    let filteredDevelopers=filterDevelopers(developers);
+    let searchDevelopers=searchDevelopersByName(filteredDevelopers, searchName);
+    return searchDevelopers;
+  }
+
   const loadDevelopers = useCallback(async () => {
     setLoading(true);
     try {
@@ -47,7 +82,7 @@ export const useDevelopers = () => {
       const list=loadDevelopersFromLocal();
       const total=loadDevelopersOnlineSize();
       setTotal(total);
-      setDevelopers(list ?? []);
+      setDevelopers(filter(list));
     } catch (err: any) {
       const list=loadDevelopersFromLocal();
       const offlineList=getOfflineDevelopers();
@@ -55,7 +90,7 @@ export const useDevelopers = () => {
           ...(list ?? []),
           ...(offlineList as Developer[] ?? []),
       ];
-      combined = filterDevelopers(combined);
+      combined = filter(combined);
       setTotal(combined.length);
       setDevelopers(combined);
     } finally {
@@ -71,12 +106,15 @@ export const useDevelopers = () => {
     } catch (err: any) {
       saveOfflineDeveloper(dev);
       setDevelopers(prev => [...prev, dev as Developer]);
+      if(isConnected===false)
+        alert('You are offline. The developer will be saved locally and synchronized when back online.');
     }
   };
 
   const updateDeveloper = async (updated: Developer) => {
     try {
       await devService.updateDeveloper(updated.id, updated);
+      updateDeveloperInLocal(updated);
       setDevelopers(prev =>
         prev.map(dev => (dev.id === updated.id ? updated : dev))
       );
@@ -89,6 +127,8 @@ export const useDevelopers = () => {
   const deleteDeveloper = async (id: number) => {
     try {
       await devService.deleteDeveloper(id);
+      const savedDevs = loadDevelopersFromLocal();
+      removeDeveloperFromLocal(id);
       setDevelopers(prev => prev.filter(dev => dev.id !== id));
       sendMessage('Delete dev' + id);
     } catch (err: any) {
@@ -107,6 +147,8 @@ export const useDevelopers = () => {
     total,
     filterFullStack,
     setFilterFullStack,
+    searchName,
+    setSearchName,
     loadDevelopers,
     addDeveloper,
     updateDeveloper,

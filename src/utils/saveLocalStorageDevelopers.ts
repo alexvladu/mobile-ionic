@@ -21,6 +21,35 @@ export const saveDevelopersToLocal = (data: Developer[]) => {
   }
 };
 
+export const updateDeveloperInLocal = (developer: Developer): void => {
+  const LOCAL_KEY = 'developers_storage';
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    const list: Developer[] = raw ? (JSON.parse(raw) as Developer[]) : [];
+
+    const idx = list.findIndex(d => d && typeof d.id === 'number' && d.id === developer.id);
+    if (idx >= 0)
+      list[idx] = developer;
+
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+  } catch (e) {
+    // ignore localStorage errors
+  }
+};
+
+
+export const removeDeveloperFromLocal = (id: number): void => {
+  const LOCAL_KEY = 'developers_storage';
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (!raw) return;
+    const list: Developer[] = JSON.parse(raw);
+    const filtered = list.filter(d => d && typeof d.id === 'number' && d.id !== id);
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(filtered));
+  } catch (e) {
+  }
+};
+
 export const saveDevelopersOnlineSize = (size: number) => {
   const ONLINE_SIZE_KEY = 'developers_online_size';
   try {

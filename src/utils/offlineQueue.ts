@@ -1,4 +1,4 @@
-import { DeveloperFormData } from "../types/developer";
+import { Developer, DeveloperFormData } from "../types/developer";
 
 // src/utils/offlineQueue.ts
 export const OFFLINE_KEY = 'offlineDevelopers';
@@ -9,7 +9,7 @@ export function saveOfflineDeveloper(dev: DeveloperFormData) {
   localStorage.setItem(OFFLINE_KEY, JSON.stringify(list));
 }
 
-export function getOfflineDevelopers() {
+export function getOfflineDevelopers() : Developer[] {
   return JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
 }
 

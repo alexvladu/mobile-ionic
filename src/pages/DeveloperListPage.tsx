@@ -11,9 +11,14 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
+  IonAvatar,
+  IonPopover,
+  IonList,
+  IonItem,
+  IonLabel,
   useIonRouter,
 } from '@ionic/react';
-import { add, logOut } from 'ionicons/icons';
+import { add, logOut, person, settings } from 'ionicons/icons';
 import DeveloperList from '../components/DeveloperList';
 import { useDevelopers } from '../hooks/useDevelopers';
 import { useAppWebSocket } from '../context/WebSocketContext';
@@ -33,15 +38,16 @@ const DeveloperListPage: React.FC = () => {
     total,
     pageSize,
     filterFullStack,
-    setFilterFullStack
+    setFilterFullStack,
+    searchName,
+    setSearchName
   } = useDevelopers();
 
   const { lastMessage } = useAppWebSocket();
   const { logout } = useAuth();
   const router = useIonRouter();
-
-  // 🔍 Search & Filter (UI only)
-  const [searchTerm, setSearchTerm] = useState('');
+  const [showPopover, setShowPopover] = useState(false);
+  const [popoverEvent, setPopoverEvent] = useState<any>(undefined);
 
   useEffect(() => {
     loadDevelopers();
@@ -61,12 +67,26 @@ const DeveloperListPage: React.FC = () => {
   };
 
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    // 🔜 TODO: loadDevelopers({ search: value, fullstack: filterFullstack })
+    setSearchName(value);
   };
 
   const handleFilterChange = (value: string) => {
     setFilterFullStack(value);
+  };
+
+  const handleProfileClick = (e: any) => {
+    setPopoverEvent(e);
+    setShowPopover(true);
+  };
+
+  const handleProfileNavigation = () => {
+    setShowPopover(false);
+    router.push('/profile', 'forward');
+  };
+
+  const handleSettingsNavigation = () => {
+    setShowPopover(false);
+    router.push('/settings', 'forward');
   };
 
   return (
@@ -87,32 +107,48 @@ const DeveloperListPage: React.FC = () => {
             </IonText>
           </div>
 
-          <div className="actions" style={{textAlign:"right"}}>
+          <div className="actions flex items-center gap-2" style={{textAlign:"right"}}>
+            {/* Profile Avatar */}
+            <div onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
+              <IonAvatar style={{ width: '36px', height: '36px', justifySelf: "right" }}>
+                alex
+              </IonAvatar>
+            </div>
+
             <IonButton
               className="bg-white text-blue-600 rounded-lg hover:scale-105 transition-transform"
               onClick={handleOpenAdd}
             >
               <IonIcon icon={add} slot="start" />
-              Add
-            </IonButton>
-
-            <IonButton
-              className="bg-red-500 text-white rounded-lg hover:scale-105 transition-transform"
-              onClick={handleLogout}
-            >
-              <IonIcon icon={logOut} slot="start" />
-              Logout
+              Add Developer
             </IonButton>
           </div>
         </IonToolbar>
       </IonHeader>
+
+      <IonPopover
+        isOpen={showPopover}
+        event={popoverEvent}
+        onDidDismiss={() => setShowPopover(false)}
+      >
+        <IonList>
+          <IonItem button onClick={handleProfileNavigation}>
+            <IonIcon icon={person} slot="start" />
+            <IonLabel>My Profile</IonLabel>
+          </IonItem>
+          <IonItem button onClick={handleLogout} lines="none">
+            <IonIcon icon={logOut} slot="start" color="danger" />
+            <IonLabel color="danger">Logout</IonLabel>
+          </IonItem>
+        </IonList>
+      </IonPopover>
 
       <IonContent className="ion-padding bg-gray-50 min-h-screen">
         {/* 🔍 Search + Filter UI */}
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <IonSearchbar
             placeholder="Search by name..."
-            value={searchTerm}
+            value={searchName}
             debounce={400}
             onIonInput={(e) => handleSearchChange(e.detail.value!)}
           />
