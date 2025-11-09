@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IonPage,
   IonHeader,
@@ -22,6 +22,7 @@ import {
   IonList,
   IonActionSheet,
   IonAlert,
+  IonModal,
 } from '@ionic/react';
 import {
   person,
@@ -33,10 +34,11 @@ import {
   save,
   close,
   camera,
-  image,
   trash,
 } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
+import { getAvatarURL, uploadAvatarFile } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const user: any = {};
@@ -45,8 +47,10 @@ const ProfilePage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [showWebcamModal, setShowWebcamModal] = useState(false);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+  const [webcamImage, setWebcamImage] = useState<string | null>(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     name: user?.name || 'John Doe',
     email: user?.email || 'john.doe@example.com',
@@ -64,22 +68,15 @@ const ProfilePage: React.FC = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSave = () => {
-    // Here you would typically make an API call to save the profile
+  const handleSave = async () => {
     console.log('Saving profile:', formData);
-
+    await uploadAvatarFile(avatarUrl);
     setToastMessage('Profile updated successfully!');
     setShowToast(true);
     setIsEditing(false);
-
-    // Update avatar if name changed
-    if (formData.name !== user?.name) {
-      setAvatarUrl(`https://ui-avatars.com/api/?name=${formData.name}&background=random&size=200`);
-    }
   };
 
   const handleCancel = () => {
-    // Reset form data
     setFormData({
       name: user?.name || 'John Doe',
       email: user?.email || 'john.doe@example.com',
@@ -95,45 +92,67 @@ const ProfilePage: React.FC = () => {
     setShowActionSheet(true);
   };
 
-  const takePicture = async (source: CameraSource) => {
-    try {
-      const photo = await Camera.getPhoto({
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Prompt,
-        quality: 90,
-        allowEditing: true,
-        width: 500,
-        height: 500,
-        correctOrientation: true,
-        saveToGallery: false,
-        promptLabelHeader: 'Select Photo Source',
-        promptLabelCancel: 'Cancel',
-        promptLabelPhoto: 'From Gallery',
-        promptLabelPicture: 'Take Photo',
-      });
+  const takePicture = async () => {
+    const platform = Capacitor.getPlatform();
 
-      if (photo.dataUrl) {
-        setAvatarUrl(photo.dataUrl);
-        setToastMessage('Photo updated successfully!');
+    if (platform === 'web') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setVideoStream(stream);
+        setShowWebcamModal(true);
+      } catch (err) {
+        console.error('Camera not accessible:', err);
+        setToastMessage('Camera not accessible in browser.');
         setShowToast(true);
       }
-    } catch (error: any) {
-      console.error('Error taking photo:', error);
-      
-      // Handle user cancellation gracefully
-      if (error.message && (
-        error.message.includes('cancelled') || 
-        error.message.includes('cancel') ||
-        error.message.includes('User cancelled')
-      )) {
-        // User cancelled, don't show error message
-        return;
+    } else {
+      try {
+        const photo = await Camera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          quality: 90,
+        });
+
+        if (photo.dataUrl) {
+          setAvatarUrl(photo.dataUrl);
+          setToastMessage('Photo updated successfully!');
+          setShowToast(true);
+        }
+      } catch (error: any) {
+        console.error('Error taking photo:', error);
+        if (
+          error.message &&
+          (error.message.includes('cancelled') || error.message.includes('cancel'))
+        )
+          return;
+
+        setToastMessage('Failed to capture photo. Please try again.');
+        setShowToast(true);
       }
-      
-      // Show error for actual failures
-      setToastMessage('Failed to capture photo. Please try again.');
-      setShowToast(true);
     }
+  };
+
+  const captureWebcamPhoto = () => {
+    const video = document.getElementById('webcam-video') as HTMLVideoElement;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageDataUrl = canvas.toDataURL('image/jpeg');
+    setAvatarUrl(imageDataUrl);
+    setWebcamImage(imageDataUrl);
+    setToastMessage('Photo captured successfully!');
+    setShowToast(true);
+    closeWebcam();
+  };
+
+  const closeWebcam = () => {
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => track.stop());
+    }
+    setVideoStream(null);
+    setShowWebcamModal(false);
   };
 
   const removePhoto = () => {
@@ -146,6 +165,24 @@ const ProfilePage: React.FC = () => {
     setShowToast(true);
     setShowAlert(false);
   };
+
+
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const avatar = await getAvatarURL();
+        console.log(avatar);
+        setAvatarUrl(avatar);
+      } catch (error) {
+        console.error('Failed to load avatar:', error);
+        setToastMessage('Failed to load avatar');
+        setShowToast(true);
+      }
+    };
+
+    fetchAvatar(); 
+  }, []);
 
   return (
     <IonPage>
@@ -175,10 +212,9 @@ const ProfilePage: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding bg-gray-50">
-        {/* Avatar Section */}
         <div className="flex flex-col items-center py-6">
-          <div className="relative">
-            <IonAvatar style={{ width: '120px', height: '120px' }}>
+          <div className="relative" style={{textAlign:'center'}}>
+            <IonAvatar style={{ width: '600px', height: '600px', margin: '0 auto' }}>
               <img src={avatarUrl} alt="Profile" />
             </IonAvatar>
             {isEditing && (
@@ -192,183 +228,27 @@ const ProfilePage: React.FC = () => {
               </IonButton>
             )}
           </div>
-          <IonText className="mt-4">
-            <h2 className="text-2xl font-bold text-gray-800">{formData.name}</h2>
-          </IonText>
-          <IonText>
-            <p className="text-gray-600">{formData.position}</p>
-          </IonText>
         </div>
+        
 
-        {/* Profile Information Card */}
-        <IonCard className="shadow-md">
-          <IonCardHeader>
-            <IonCardTitle className="text-lg font-semibold text-blue-600">
-              Personal Information
-            </IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <IonList>
-              <IonItem>
-                <IonIcon icon={person} slot="start" className="text-blue-600" />
-                <IonLabel position="stacked">Full Name</IonLabel>
-                {isEditing ? (
-                  <IonInput
-                    value={formData.name}
-                    onIonInput={(e) => handleInputChange('name', e.detail.value!)}
-                    placeholder="Enter your name"
-                  />
-                ) : (
-                  <IonText className="mt-2">{formData.name}</IonText>
-                )}
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={mail} slot="start" className="text-blue-600" />
-                <IonLabel position="stacked">Email</IonLabel>
-                {isEditing ? (
-                  <IonInput
-                    type="email"
-                    value={formData.email}
-                    onIonInput={(e) => handleInputChange('email', e.detail.value!)}
-                    placeholder="Enter your email"
-                  />
-                ) : (
-                  <IonText className="mt-2">{formData.email}</IonText>
-                )}
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={call} slot="start" className="text-blue-600" />
-                <IonLabel position="stacked">Phone</IonLabel>
-                {isEditing ? (
-                  <IonInput
-                    type="tel"
-                    value={formData.phone}
-                    onIonInput={(e) => handleInputChange('phone', e.detail.value!)}
-                    placeholder="Enter your phone"
-                  />
-                ) : (
-                  <IonText className="mt-2">{formData.phone}</IonText>
-                )}
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={briefcase} slot="start" className="text-blue-600" />
-                <IonLabel position="stacked">Position</IonLabel>
-                {isEditing ? (
-                  <IonInput
-                    value={formData.position}
-                    onIonInput={(e) => handleInputChange('position', e.detail.value!)}
-                    placeholder="Enter your position"
-                  />
-                ) : (
-                  <IonText className="mt-2">{formData.position}</IonText>
-                )}
-              </IonItem>
-
-              <IonItem>
-                <IonIcon icon={calendar} slot="start" className="text-blue-600" />
-                <IonLabel position="stacked">Join Date</IonLabel>
-                {isEditing ? (
-                  <IonInput
-                    type="date"
-                    value={formData.joinDate}
-                    onIonInput={(e) => handleInputChange('joinDate', e.detail.value!)}
-                  />
-                ) : (
-                  <IonText className="mt-2">
-                    {new Date(formData.joinDate).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </IonText>
-                )}
-              </IonItem>
-            </IonList>
-          </IonCardContent>
-        </IonCard>
-
-        {/* Bio Section */}
-        <IonCard className="shadow-md mt-4">
-          <IonCardHeader>
-            <IonCardTitle className="text-lg font-semibold text-blue-600">
-              About Me
-            </IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            {isEditing ? (
-              <IonItem>
-                <IonLabel position="stacked">Bio</IonLabel>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  placeholder="Tell us about yourself..."
-                  rows={4}
-                  className="w-full p-2 border border-gray-300 rounded-md mt-2"
-                />
-              </IonItem>
-            ) : (
-              <IonText>
-                <p className="text-gray-700">{formData.bio}</p>
-              </IonText>
-            )}
-          </IonCardContent>
-        </IonCard>
-
-        {/* Statistics Card */}
-        <IonCard className="shadow-md mt-4 mb-6">
-          <IonCardHeader>
-            <IonCardTitle className="text-lg font-semibold text-blue-600">
-              Statistics
-            </IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <IonText>
-                  <h3 className="text-2xl font-bold text-blue-600">24</h3>
-                  <p className="text-sm text-gray-600">Projects</p>
-                </IonText>
-              </div>
-              <div>
-                <IonText>
-                  <h3 className="text-2xl font-bold text-green-600">156</h3>
-                  <p className="text-sm text-gray-600">Commits</p>
-                </IonText>
-              </div>
-              <div>
-                <IonText>
-                  <h3 className="text-2xl font-bold text-purple-600">89</h3>
-                  <p className="text-sm text-gray-600">Reviews</p>
-                </IonText>
-              </div>
-            </div>
-          </IonCardContent>
-        </IonCard>
+        
       </IonContent>
 
-      {/* Action Sheet for Photo Options */}
       <IonActionSheet
         isOpen={showActionSheet}
         onDidDismiss={() => setShowActionSheet(false)}
         header="Change Profile Photo"
         buttons={[
           {
-            text: 'Take Photo or Choose from Gallery',
+            text: 'Take Photo',
             icon: camera,
-            handler: () => {
-              takePicture(CameraSource.Prompt);
-            },
+            handler: takePicture,
           },
           {
             text: 'Remove Photo',
             icon: trash,
             role: 'destructive',
-            handler: () => {
-              removePhoto();
-            },
+            handler: removePhoto,
           },
           {
             text: 'Cancel',
@@ -377,24 +257,41 @@ const ProfilePage: React.FC = () => {
         ]}
       />
 
-      {/* Alert for Remove Photo Confirmation */}
       <IonAlert
         isOpen={showAlert}
         onDidDismiss={() => setShowAlert(false)}
         header="Remove Photo"
         message="Are you sure you want to remove your profile photo?"
         buttons={[
-          {
-            text: 'Cancel',
-            role: 'cancel',
-          },
-          {
-            text: 'Remove',
-            role: 'destructive',
-            handler: confirmRemovePhoto,
-          },
+          { text: 'Cancel', role: 'cancel' },
+          { text: 'Remove', role: 'destructive', handler: confirmRemovePhoto },
         ]}
       />
+
+      {/* Webcam Modal for browser */}
+      <IonModal isOpen={showWebcamModal} onDidDismiss={closeWebcam}>
+        <div className="flex flex-col items-center justify-center h-full bg-black">
+          <video
+            id="webcam-video"
+            autoPlay
+            playsInline
+            style={{ width: '100%', height: 'auto', maxHeight: '80vh' }}
+            ref={(video) => {
+              if (video && videoStream) {
+                video.srcObject = videoStream;
+              }
+            }}
+          ></video>
+          <div className="flex gap-4 mt-4">
+            <IonButton color="success" onClick={captureWebcamPhoto}>
+              Capture
+            </IonButton>
+            <IonButton color="medium" onClick={closeWebcam}>
+              Cancel
+            </IonButton>
+          </div>
+        </div>
+      </IonModal>
 
       <IonToast
         isOpen={showToast}
