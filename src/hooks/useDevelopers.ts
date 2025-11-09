@@ -14,6 +14,7 @@ export const useDevelopers = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(3);
   const [total, setTotal] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState<boolean>(true);
 
   const [searchName, setSearchName] = useState<string | null>(null);
   const [filterFullStack, setFilterFullStack] = useState<string>("all");
@@ -70,8 +71,16 @@ export const useDevelopers = () => {
   const filter = (developers: Developer[]) : Developer[] =>{
     let filteredDevelopers=filterDevelopers(developers);
     let searchDevelopers=searchDevelopersByName(filteredDevelopers, searchName);
-    return searchDevelopers;
+    let processedDevelopers=searchDevelopers.map(dev=>{
+      const apiUrl = import.meta.env.VITE_DATA_SERVICE_URL;
+      return{
+        ...dev,
+        photoURL: dev.photoURL ? ` ${apiUrl}/public/${dev.photoURL}` : `https://ui-avatars.com/api/?name=${dev.name}&background=random&size=200`
+      }
+    });
+    return processedDevelopers;
   }
+
 
   const loadDevelopers = useCallback(async () => {
     setLoading(true);
@@ -98,7 +107,7 @@ export const useDevelopers = () => {
     }
   }, [currentPage, filterFullStack, searchName]);
 
-  const addDeveloper = async (dev: Omit<Developer, 'id'>) => {
+  const addDeveloper = async (dev: any) => {
     try {
       const createdDev = await devService.createDeveloper(dev);
       setDevelopers(prev => [...prev, createdDev]);

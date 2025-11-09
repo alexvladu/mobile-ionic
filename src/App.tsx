@@ -24,8 +24,10 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
+import 'leaflet/dist/leaflet.css';
 import { AuthProvider } from './context/AuthContext';
 import ProfilePage from './pages/ProfilePage';
+import SnowTestPage from './pages/SnowTestPage';
 
 setupIonicReact();
 
@@ -51,9 +53,11 @@ const App: React.FC = () => (
                 <DeveloperListPage />
             )} />
 
-            <Route exact path="/developers/add" component={AddDeveloperPage} />
+            <Route exact path="/developers/add" component={AddDeveloperPage}></Route>
 
             <Route exact path="/profile" component={ProfilePage}></Route>
+
+            <Route exact path="/snow" component={SnowTestPage}></Route>
 
             <Route render={() => <Redirect to="/login" />} />
           </IonRouterOutlet>

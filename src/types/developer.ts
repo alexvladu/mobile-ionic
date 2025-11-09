@@ -4,6 +4,9 @@ export interface Developer {
   age: number;
   fullStack: boolean;
   endDate: string;
+  lat: number;
+  lng: number;
+  photoURL?: string;
 }
 
 export interface DeveloperPaginated {

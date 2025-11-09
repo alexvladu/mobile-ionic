@@ -69,7 +69,6 @@ const ProfilePage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    console.log('Saving profile:', formData);
     await uploadAvatarFile(avatarUrl);
     setToastMessage('Profile updated successfully!');
     setShowToast(true);

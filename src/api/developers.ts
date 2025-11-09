@@ -16,7 +16,7 @@ export class DeveloperService {
     return res.data;
   }
 
-  async createDeveloper(dev: Omit<Developer, 'id'>): Promise<Developer> {
+  async createDeveloper(dev: any): Promise<Developer> {
     const res = await axiosInstance.post<Developer>(this.baseUrl, dev, {
       headers: { 'Content-Type': 'application/json' },
     });
